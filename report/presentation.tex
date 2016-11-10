@@ -1,0 +1,302 @@
+\documentclass{beamer}
+
+\mode<presentation> {
+
+% The Beamer class comes with a number of default slide themes
+% which change the colors and layouts of slides. Below this is a list
+% of all the themes, uncomment each in turn to see what they look like.
+
+%\usetheme{default}
+%\usetheme{AnnArbor}
+%\usetheme{Antibes}
+%\usetheme{Bergen}
+%\usetheme{Berkeley}
+%\usetheme{Berlin}
+%\usetheme{Boadilla}
+%\usetheme{CambridgeUS}
+%\usetheme{Copenhagen}
+%\usetheme{Darmstadt}
+%\usetheme{Dresden}
+%\usetheme{Frankfurt}
+%\usetheme{Goettingen}
+%\usetheme{Hannover}
+%\usetheme{Ilmenau}
+%\usetheme{JuanLesPins}
+%\usetheme{Luebeck}
+\usetheme{Madrid}
+%\usetheme{Malmoe}
+%\usetheme{Marburg}
+%\usetheme{Montpellier}
+%\usetheme{PaloAlto}
+%\usetheme{Pittsburgh}
+%\usetheme{Rochester}
+%\usetheme{Singapore}
+%\usetheme{Szeged}
+%\usetheme{Warsaw}
+
+% As well as themes, the Beamer class has a number of color themes
+% for any slide theme. Uncomment each of these in turn to see how it
+% changes the colors of your current slide theme.
+
+%\usecolortheme{albatross}
+%\usecolortheme{beaver}
+%\usecolortheme{beetle}
+%\usecolortheme{crane}
+%\usecolortheme{dolphin}
+%\usecolortheme{dove}
+%\usecolortheme{fly}
+%\usecolortheme{lily}
+%\usecolortheme{orchid}
+%\usecolortheme{rose}
+%\usecolortheme{seagull}
+%\usecolortheme{seahorse}
+%\usecolortheme{whale}
+%\usecolortheme{wolverine}
+
+%\setbeamertemplate{footline} % To remove the footer line in all slides uncomment this line
+%\setbeamertemplate{footline}[page number] % To replace the footer line in all slides with a simple slide count uncomment this line
+
+%\setbeamertemplate{navigation symbols}{} % To remove the navigation symbols from the bottom of all slides uncomment this line
+}
+
+\usepackage{graphicx} % Allows including images
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
+\usepackage{csvsimple}
+\usepackage{siunitx}
+\ExplSyntaxOn
+  \cs_new_eq:NN \calc \fp_eval:n
+\ExplSyntaxOff
+
+\newcommand*{\formatNumber}[2][]{\num[%
+  round-mode=places,% Round output to specified number of places
+  round-precision=3,% Round-precision is 3
+  output-decimal-marker={,},% Use , as decimal marker
+  #1% Other options
+  ]{\calc{#2}}}
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title[Short title]{Expanding Vitis Vinifera flavonoid network using Feature Selection Methods} % The short title appears at the bottom of every slide, the full title is only on the title page
+
+\author{Aliaksandr Siarohin} % Your name
+\institute[UCLA] % Your institution as it will appear on the bottom of every slide, may be shorthand to save space
+{
+University of Trento \\ % Your institution for the title page
+\medskip
+\textit{aliaksandr.siarohin@studenti.unitn.it} % Your email address
+}
+\date{\today} % Date, can be changed to a custom date
+
+\begin{document}
+
+\begin{frame}
+\titlepage % Print the title page as the first slide
+\end{frame}
+
+\begin{frame}
+\frametitle{Overview} % Table of contents slide, comment this block out to remove it
+\tableofcontents % Throughout your presentation, if you choose to use \section{} and \subsection{} commands, these will automatically be printed on this slide as an overview of your presentation
+\end{frame}
+
+                             
+%----------------------------------------------------------------------------------------
+%	PRESENTATION SLIDES
+%----------------------------------------------------------------------------------------
+
+%------------------------------------------------
+\section{Introduction} % Sections can be created in order to organize your presentation into discrete blocks, all sections and subsections are automatically printed in the table of contents as an overview of the talk
+%------------------------------------------------
+\begin{frame}
+\frametitle{Project Settings}
+\begin{block}{Data}
+In this project we had been given expression data of vitus vinifera genes, and part of flavonoid pathway.
+\end{block}
+\begin{block}{Task}
+The task is to expand the pathway.
+\end{block}
+\end{frame}
+
+\begin{frame}
+\frametitle{Method}
+\begin{block}{Method Description}
+I tried to apply feature selection methods for this project. I tried 3 methods:
+\begin{enumerate}
+\item lasso \cite{lasso}
+\item randomized lasso \cite{randomized_lasso}
+\item recursive feature elimination \cite{rfe} with random forest \cite{random_forest}
+\end{enumerate}
+\end{block}
+\end{frame}
+
+\section{Preprocesing}
+\begin{frame}
+\frametitle{Procesing NaN}
+\begin{block}{Observation}
+Expression data contains a lot of NaN values, and in order to apply feature selection methods we first need to deal with this NaNs.
+\end{block}
+\begin{block}{Solution}
+I decided to remove all the experiments with amount of NaNs $>$ 5000. And replace NaNs that left with mean computed across all genes in given experiment (e.g column mean).
+\end{block}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Procesing NaN}
+\begin{table}
+\centering
+\label{table:preprocesing}
+\caption{Removed after preprocesing data}
+\csvreader[tabular=ccc,
+    table head=\toprule Removed Experiments & Removed Genes & Replaced With Mean Cells\\\midrule,
+    table foot=\bottomrule
+]%
+{preprocesing_nan.csv}{NumberOfCellsReplcedWithMean=\mr,NumberOfRemovedExperiments=\re,NumberOfRemovedGenes=\rg}%
+{\re & \rg & \mr}%
+\end{table}
+
+\end{frame}
+%------------------------------------------------
+
+\section{Method Description}
+\begin{frame}
+\frametitle{Problem Statement}
+\begin{block}{Definitions}
+$G$ - be set of genes, $E$ - set of experiments, $M$ - gene expression matrix. For now let`s assume that we want to predict genes expression of gene $g$, based on all the other genes.
+\end{block}
+\begin{block}{Problem}
+We can construct following regression problem $X = M_{E, G/{\{g\}}}^T$, $Y = M_{E, g}^T$, so the regression problem is to predict Y given X.
+\end{block}
+\begin{block}{Feature Selection}
+Now using feature selection methods we can obtain genes that predict $g$, and ranking of this genes.
+\end{block}
+\end{frame}
+
+\subsection{Lasso}
+\begin{frame}
+\frametitle{Lasso}
+\begin{block}{Regularization Parameter}
+Lasso method as described in \cite{lasso} has regularization parameter $\alpha$ which controls amount of regularization, I start from 0.1 and try to decrease this parameter until method select 100 genes (The lower $\alpha$ increase computational time, so 100 genes is a trade-of between efficiency and accuracy)
+\end{block}
+\begin{block}{Ranking}
+The ranking of genes can be obtaining using absolute value of weight assigned to every selected gene.
+\end{block}
+\end{frame}
+
+\subsection{Randomized lasso}
+\begin{frame}
+\frametitle{Randomized lasso}
+\begin{block}{Settings}
+Randomized lasso as described in \cite{randomized_lasso} run lasso on random subsets of training set (I use 30 runs, and 75 \% of training set for every run).
+\end{block}
+\begin{block}{Regularization Parameter}
+I use the same setting for estimating alpha (start from 0.1 and decrease until method select 100 genes)
+\end{block}
+\begin{block}{Ranking}
+The ranking can be obtained from the number of times that method select particular gene.
+\end{block}
+\end{frame}
+
+
+\subsection{RFE with Random forest}
+\begin{frame}
+\frametitle{RFE with Random forest}
+\begin{block}{Description}
+Recursive feature elimination as described in \cite{rfe} fit regression method on all dataset, than discard feature with the most lowest rating, fit regression on reduced dataset, discard feature with lowest rating and so on, until one feature is left. Random forest on the other hand can produce features ranking, base on the number of times the feature selected when random forest was build.
+\end{block}
+\begin{block}{Settings}
+The problem of this method is that it take long time to run for all the genes. So I decided to take genes selected by Lasso method. So this method just assign new ranks. I use random forest with 100 trees in it. 
+\end{block}
+\end{frame}
+\begin{frame}
+\frametitle{RFE with Random forest}
+\begin{block}{Ranking}
+I assigned rank using formula:
+\begin{equation*}
+\frac{1}{n\_features - step\_at\_which\_feature\_was\_discarded}
+\end{equation*}
+\end{block}
+\end{frame}
+
+
+\subsection{Method Comparison}
+\begin{frame}
+\frametitle{Method Comparison}
+\begin{block}{Comparison}
+To compare methods I select 100 top rated genes and use 2 metrics average: number of genes from pathway selected by method and average \texttt{DCG}\footnote{\url{https://en.wikipedia.org/wiki/Discounted_cumulative_gain}}(gene from pathway get relevance equal to 1, and not from pathway get relevance equal to zero).
+\end{block}
+\end{frame}
+
+\begin{frame}
+\frametitle{Method Comparison}
+\begin{table}
+\centering
+\caption{Features selection method comparison.}
+\label{table:method_comparison}
+\csvreader[tabular=ccc,
+    table head=\toprule Method & Average number of pathway genes & Average DCG\\\midrule,
+    table foot=\bottomrule
+]%
+{method_comparison.csv}{Method=\m,DCG=\d,NumberOfPatwayGenes=\n}%
+{\m & \formatNumber{\n} & \formatNumber{\d}}%
+\end{table}
+\end{frame}
+
+\section{Final Result}
+\begin{frame}
+\frametitle{Final Result}
+
+\begin{block}{Result Aggregation}
+To obtaining final result I use rank aggregation described in \cite{rang_aggr}. I aggregate list for all methods and for all genes, and select best 25; highest rated get highest rank. 
+\end{block}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Final Result}
+\begin{table}
+\centering
+\caption{Top10 final genes.}
+\label{table:selectedTop10}
+\csvreader[tabular=ccc,
+    table head=\toprule Rank & Gene & Is in pathway \\\midrule,
+    table foot=\bottomrule
+]%
+{selected_genes_list_10.csv}{Rank=\r,Genes=\g,InPathway=\i}%
+{\r & \g & \i}%
+\end{table}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Final Result}
+\begin{table}
+\centering
+\caption{Top10 from final genes, that are not in pathway.}
+\label{table:selectedNotPathway}
+\csvreader[tabular=cc,
+    table head=\toprule Rank & Gene \\\midrule,
+    table foot=\bottomrule
+]%
+{selected_genes_not_pathway.csv}{Rank=\r,Genes=\g}%
+{\r & \g}%
+\end{table}
+\end{frame}
+\section{References}
+\begin{frame}
+\frametitle{References}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\Huge{\centerline{The End}}
+\end{frame}
+
+%----------------------------------------------------------------------------------------
+
+\end{document} 
