@@ -6,5 +6,10 @@ In this project we had been given expression data of vitus vinifera genes, and p
 
 scipy stack, jupyter, r with package RankAggreg
 
+# Pipeline
+
+1) preprocesing.ipynb
+2) feature_selection.ipynb
+3) result_computation.ipynb
 
 
